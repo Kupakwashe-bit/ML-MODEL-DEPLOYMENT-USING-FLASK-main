@@ -1,0 +1,294 @@
+
+{% extends "index.html"%}
+
+{% block content %}
+
+        <!-- Make sure Bootstrap Icons is loaded for the house icon -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<br>
+        <div class="text-start">
+          <a href="/" class="nav-link scrollto d-inline-block fw-medium px-3 py-2 rounded-pill shadow-sm"
+             style="background-color: #87CEEB; color: #fff; font-size: 0.9rem; transition: all 0.3s ease; border: none;"
+             onmouseover="this.style.backgroundColor='#1E90FF'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.15)'"
+             onmouseout="this.style.backgroundColor='#87CEEB'; this.style.boxShadow='0 1px 4px rgba(0, 0, 0, 0.1)'">
+            <i class="bi bi-house-door-fill me-2"></i>Home
+          </a>
+            {% if current_user.is_authenticated %}
+      <div class="d-flex justify-content-end">
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger rounded-pill px-4">
+          <i class="bi bi-power me-2"></i> Sign Out
+        </a>
+      </div>
+    {% else %}
+      <div></div> <!-- Empty div to maintain layout -->
+    {% endif %}
+    </div>  <br>
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
+
+
+
+
+
+        <div class="container mt-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0"><i class="fas fa-users me-2"></i>User Management</h3>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Toast Notification -->
+                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                        <div id="statusToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-success text-white">
+                                <strong class="me-auto">Success</strong>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body" id="toastMessage"></div>
+                        </div>
+                    </div>
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="bg-light-blue text-white">
+                                <tr>
+                                    <th class="ps-4">ID</th>
+                                    <th>First Name</th>
+                                    <th>Surname</th>
+                                    <th>Email</th>
+                                    <th>Username</th>
+                                    <th>Status</th>
+                                    <th>Role</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if users %}
+                                    {% for user in users %}
+                                    <tr class="{% if not user.isActive %}text-muted{% endif %}">
+                                        <td class="ps-4 fw-semibold">{{ user.id }}</td>
+                                        <td>{{ user.firstName }}</td>
+                                        <td>{{ user.surname }}</td>
+                                        <td><a href="mailto:{{ user.email }}" class="text-decoration-none">{{ user.email }}</a></td>
+                                        <td>{{ user.userName }}</td>
+                                        <td>
+                                            {% if user.isActive %}
+                                                <span class="badge bg-success rounded-pill">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary rounded-pill">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info text-dark rounded-pill">{{ user.role }}</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                {% if user.role != 'admin' %}  <!-- Only show toggle button for non-admin users -->
+                                                <button class="btn btn-sm btn-outline-primary rounded-circle toggle-status"
+                                                        data-user-id="{{ user.id }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                                        title="Toggle Status">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                {% endif %}
+
+                                                {% if user.id != current_user.id %}  <!-- Don't allow deleting yourself -->
+                                                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" class="delete-user-form">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-user-btn"
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted">
+                                            <i class="fas fa-user-slash fa-2x mb-3"></i>
+                                            <h5>No users found</h5>
+                                            <p class="mb-0">Add a new user to get started</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Showing {{ users|length }} users</small>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .bg-light-blue {
+                background-color: #0d6efd;
+                background-image: linear-gradient(135deg, #0d6efd 0%, #198754 100%);
+            }
+            .table-hover tbody tr:hover {
+                background-color: rgba(13, 110, 253, 0.05);
+            }
+            .rounded-circle {
+                width: 32px;
+                height: 32px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+
+       <script>
+
+   // Handle delete buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-user-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+            const form = this.closest('form');
+
+            if (!confirm('Are you sure you want to delete this user?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: new URLSearchParams(new FormData(form)),
+                    credentials: 'same-origin'
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Expected JSON, got: ${text.substring(0, 100)}`);
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to delete user');
+                }
+
+                if (data.success) {
+                    // Remove the deleted row with animation
+                    const row = form.closest('tr');
+                    row.style.transition = 'all 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+
+                    // Show success message
+                    showToast(data.message, 'success');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message || 'An error occurred', 'danger');
+            }
+        });
+    });
+});
+
+// Handle status toggle buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toggle-status').forEach(button => {
+        button.addEventListener('click', async function() {
+            const userId = this.getAttribute('data-user-id');
+            const row = this.closest('tr');
+
+            try {
+                const response = await fetch(`/toggle_user_status/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Expected JSON, got: ${text.substring(0, 100)}`);
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update status');
+                }
+
+                if (data.success) {
+                    // Update the UI
+                    const statusBadge = row.querySelector('td:nth-child(6) span.badge');
+                    statusBadge.textContent = data.new_status_text;
+                    statusBadge.className = `badge ${data.new_badge_class} rounded-pill`;
+
+                    // Toggle row text appearance
+                    row.classList.toggle('text-muted', !data.new_status);
+
+                    // Show success message
+                    showToast('Status updated successfully', 'success');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message || 'An error occurred', 'danger');
+            }
+        });
+    });
+
+    // Toast notification function
+    function showToast(message, type) {
+        const toastEl = document.getElementById('statusToast');
+        const toastBody = document.getElementById('toastMessage');
+        const toastHeader = toastEl.querySelector('.toast-header');
+
+        // Update toast content
+        toastBody.textContent = message;
+        toastHeader.className = `toast-header bg-${type} text-white`;
+
+        // Show toast
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+});
+</script>
+        </div>
+{% endif %}
+{% endblock %}

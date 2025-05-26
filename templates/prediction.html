@@ -1,0 +1,286 @@
+
+
+{% extends "index.html" %}
+{% block title %} <title>Prediction</title>{% endblock %}
+
+{% block content %}
+<style>
+    .diabetic-result {
+  background-color: #ffebee;
+  border-left: 5px solid #f44336;
+}
+
+.non-diabetic-result {
+  background-color: #e8f5e9;
+  border-left: 5px solid #4caf50;
+}
+
+.error-result {
+  background-color: #fff8e1;
+  border-left: 5px solid #ffc107;
+}
+
+.form-container {
+  background-color: #e6f7ff;
+  /* Light blue background */
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.info-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.required-field::after {
+  content: " *";
+  color: #dc3545;
+}
+
+.form-section {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.form-section h3 {
+  color: #0d6efd;
+  border-bottom: 2px solid #0d6efd;
+  padding-bottom: 8px;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+</style>
+<br>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/" class="nav-link scrollto d-inline-block fw-medium px-3 py-2 rounded-pill shadow-sm"
+       style="background-color: #87CEEB; color: #fff; font-size: 0.9rem; transition: all 0.3s ease; border: none;"
+       onmouseover="this.style.backgroundColor='#1E90FF'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.15)'"
+       onmouseout="this.style.backgroundColor='#87CEEB'; this.style.boxShadow='0 1px 4px rgba(0, 0, 0, 0.1)'">
+      <i class="bi bi-house-door-fill me-2"></i>Home
+    </a>
+    
+    {% if current_user.is_authenticated %}
+      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger rounded-pill px-4">
+        <i class="bi bi-power me-2"></i>Sign Out
+      </a>
+    {% endif %}
+  </div>
+
+
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="form-container p-4 p-md-5 mb-4">
+                    <h1 class="text-center mb-4">Diabetes Risk Prediction</h1>
+
+                    <form action="/predict" method="POST" class="needs-validation" novalidate autocomplete="off">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <div class="form-section">
+                                    <h3>Personal Information</h3>
+
+                                    <!-- Age -->
+                                    <div class="mb-3">
+                                        <label for="age" class="form-label required-field">Age</label>
+                                        <input type="number" step="0.1" class="form-control" id="age" name="age"
+                                            value="{{ form_data.age if form_data }}" required>
+                                    </div>
+
+                                    <!-- Gender -->
+                                    <div class="mb-3">
+                                        <label for="gender" class="form-label required-field">Gender</label>
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="" disabled selected>Select option</option>
+                                            <option value="0" {% if form_data and form_data.gender=='0' %}selected{%
+                                                endif %}>Female = 0</option>
+                                            <option value="1" {% if form_data and form_data.gender=='1' %}selected{%
+                                                endif %}>Male = 1</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- BMI -->
+                                    <div class="mb-3">
+                                        <label for="bmi" class="form-label required-field">BMI</label>
+                                        <input type="number" step="0.01" class="form-control" id="bmi" name="bmi"
+                                            value="{{ form_data.bmi if form_data }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <div class="form-section">
+                                    <h3>Health Metrics</h3>
+
+                                    <!-- Hypertension -->
+                                    <div class="mb-3">
+                                        <label for="hypertension" class="form-label required-field">Hypertension</label>
+                                        <select class="form-select" id="hypertension" name="hypertension" required>
+                                            <option value="" disabled selected>Select option</option>
+                                            <option value="0" {% if form_data and form_data.hypertension=='0'
+                                                %}selected{% endif %}>No = 0</option>
+                                            <option value="1" {% if form_data and form_data.hypertension=='1'
+                                                %}selected{% endif %}>Yes = 1</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Heart Disease -->
+                                    <div class="mb-3">
+                                        <label for="heart_disease" class="form-label required-field">Heart
+                                            Disease</label>
+                                        <select class="form-select" id="heart_disease" name="heart_disease" required>
+                                            <option value="" disabled selected>Select option</option>
+                                            <option value="0" {% if form_data and form_data.heart_disease=='0'
+                                                %}selected{% endif %}>No = 0</option>
+                                            <option value="1" {% if form_data and form_data.heart_disease=='1'
+                                                %}selected{% endif %}>Yes = 1</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Smoking History -->
+                                    <div class="mb-3">
+                                        <label for="smoking_history" class="form-label required-field">Smoking
+                                            History</label>
+                                        <select class="form-select" id="smoking_history" name="smoking_history"
+                                            required>
+                                            <option value="" disabled selected>Select option</option>
+                                            <option value="0" {% if form_data and form_data.smoking_history=='0'
+                                                %}selected{% endif %}>Never</option>
+                                            <option value="1" {% if form_data and form_data.smoking_history=='1'
+                                                %}selected{% endif %}>Unknown</option>
+                                            <option value="2" {% if form_data and form_data.smoking_history=='2'
+                                                %}selected{% endif %}>Current</option>
+                                            <option value="3" {% if form_data and form_data.smoking_history=='3'
+                                                %}selected{% endif %}>Former</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="form-section">
+                                    <h3>Blood Tests</h3>
+                                    <div class="row">
+                                        <!-- HbA1c Level -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="HbA1c_level" class="form-label required-field">HbA1c Level
+                                                (%)</label>
+                                            <input type="number" step="0.1" class="form-control" id="HbA1c_level"
+                                                name="HbA1c_level" value="{{ form_data.HbA1c_level if form_data }}"
+                                                required>
+                                        </div>
+
+                                        <!-- Blood Glucose -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="blood_glucose_level" class="form-label required-field">Blood
+                                                Glucose (mg/dL)</label>
+                                            <input type="number" class="form-control" id="blood_glucose_level"
+                                                name="blood_glucose_level"
+                                                value="{{ form_data.blood_glucose_level if form_data }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Predict Diabetes Risk
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if show_result %}
+                <div
+                    class="result-container p-4 mb-5 rounded {% if result_class == 'diabetic' %}diabetic-result{% elif result_class == 'non-diabetic' %}non-diabetic-result{% else %}error-result{% endif %}">
+                    <h3 class="mb-3">Prediction Result</h3>
+                    <div class="d-flex align-items-center mb-2">
+                        <h4 class="mb-0 me-3">{{ prediction_text }}</h4>
+                        {% if result_class == 'diabetic' %}
+                        <span class="badge bg-danger">High Risk</span>
+                        {% elif result_class == 'non-diabetic' %}
+                        <span class="badge bg-success">Low Risk</span>
+                        {% endif %}
+                    </div>
+                    {% if confidence %}
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar {% if result_class == 'diabetic' %}bg-danger{% else %}bg-success{% endif %}"
+                            role="progressbar" style="width: {{ confidence }}%" aria-valuenow="{{ confidence }}"
+                            aria-valuemin="0" aria-valuemax="100">
+                            {{ "%.1f"|format(confidence) }}% Confidence
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if result_class in ['diabetic', 'non-diabetic'] %}
+                    <div
+                        class="alert {% if result_class == 'diabetic' %}alert-danger{% else %}alert-success{% endif %}">
+                        {% if result_class == 'diabetic' %}
+                        <strong>Recommendation:</strong> Please consult with a healthcare professional for further
+                        evaluation.
+                        {% else %}
+                        <strong>Recommendation:</strong> Maintain healthy lifestyle habits to prevent diabetes.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Form validation script -->
+    <!-- Add this right before the closing </body> tag -->
+<script>
+    (function() {
+        'use strict';
+        
+        // Validation and form reset
+        document.querySelectorAll('.needs-validation').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+                
+                // Reset form after successful submission
+                if (form.checkValidity()) {
+                    setTimeout(() => {
+                        form.reset();
+                        form.classList.remove('was-validated');
+                    }, 1000);
+                }
+            }, false);
+        });
+        
+        // Clear form if coming back with results
+        {% if result_class %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.needs-validation');
+            if (form) {
+                form.reset();
+                form.classList.remove('was-validated');
+            }
+        });
+        {% endif %}
+    })();
+</script>
+</body>
+
+{% endblock%}
