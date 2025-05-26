@@ -1,0 +1,8 @@
+flask
+flask-login
+flask-wtf
+joblib
+pandas
+psycopg2
+werkzeug
+numpy
