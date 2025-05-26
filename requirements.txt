@@ -6,3 +6,4 @@ pandas
 psycopg2
 werkzeug
 numpy
+gunicorn
